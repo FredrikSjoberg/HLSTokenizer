@@ -107,12 +107,63 @@ let errorString = """
 /// * Decimal-Resolution
 ///     * two decimal-integers separated by "x".
 
-guard let data = rawString.data(using: .utf8) else {
-    print("Failed to generate HLS manifest data")
-    exit(1)
+//guard let data = rawString.data(using: .utf8) else {
+//    print("Failed to generate HLS manifest data")
+//    exit(1)
+//}
+//
+//let tokenizer = Tokenizer(tagRules: [EXTTagRule()])
+//tokenizer.process(data: data, details: .complete) {
+//    print($0)
+//}
+
+let usage = """
+Usage:
+
+hlstokenizer http://www.example.com/manifest.m3u8
+downloads and tokenizes the playlist at the specified url
+
+hlstokenizer path/to/manifest.m3u8
+tokenizes the playlist found at the path relative to the current directory
+
+--h | help
+--v | version
+
+"""
+
+guard CommandLine.arguments.count > 1 else {
+    print("Invalid arguments.\n")
+    print(usage)
+    exit(EXIT_FAILURE)
 }
 
-let tokenizer = Tokenizer(tagRules: [EXTTagRule()])
-tokenizer.process(data: data, details: .complete) {
-    print($0)
+let cmdArgs = CommandLine.arguments
+let dispatchGroup = DispatchGroup()
+
+func resolve(args: [String]) {
+    dispatchGroup.enter()
+    let path = args[1]
+    
+    if let url = URL(string: path) {
+        let task = URLSession.shared.dataTask(with: url) { data, response, error in
+            if let data = data {
+                let tokenizer = Tokenizer(tagRules: [EXTTagRule()])
+                tokenizer.process(data: data, details: .complete) {
+                    print($0)
+                }
+            }
+            if let error = error {
+                print(error)
+            }
+            dispatchGroup.leave()
+        }
+        task.resume()
+    }
 }
+
+resolve(args: cmdArgs)
+
+dispatchGroup.notify(queue: DispatchQueue.main) {
+    exit(EXIT_SUCCESS)
+}
+dispatchMain()
