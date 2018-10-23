@@ -10,21 +10,26 @@
 import Foundation
 
 
-/// Overview
-/// * Data slicing
-/// * Tokenization
-/// * Grammar
-///
-/// HLS Tokenization
-/// * Line (delimiter)
-///     * Tag:Attributes
-///     * URI
-///     * Comment
-
-
 /// TODO: Break `Data` into overlapping, indexed chuncks
 ///
 /// This will allow async parsing
+
+public struct MasterPlaylist {
+    
+}
+
+public struct MediaPlaylist {
+    
+}
+
+
+
+
+
+
+
+
+
 
 
 
@@ -34,7 +39,6 @@ public extension Data {
         let options: Data.SearchOptions = []
         var currentIndex = startIndex
         while let slice = nextSlice(in: (currentIndex..<endIndex), delimiter: delimiter, options: options) {
-            print(currentIndex,"-->",endIndex)
             currentIndex = slice.1
             let line = String(bytes: slice.0, encoding: .utf8)
             onLine(line)
@@ -42,7 +46,6 @@ public extension Data {
         
         /// If there is no terminating line break, currentIndex will never reach endIndex. If so, we correct by extracting the last line
         if currentIndex != endIndex {
-            print(currentIndex,"--x",endIndex)
             let lastString = String(bytes: self[(currentIndex..<endIndex)], encoding: .utf8)
             onLine(lastString)
         }
