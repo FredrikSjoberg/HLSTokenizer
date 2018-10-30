@@ -131,11 +131,11 @@ tokenizes the playlist found at the path relative to the current directory
 
 """
 
-guard CommandLine.arguments.count > 1 else {
-    print("Invalid arguments.\n")
-    print(usage)
-    exit(EXIT_FAILURE)
-}
+//guard CommandLine.arguments.count > 1 else {
+//    print("Invalid arguments.\n")
+//    print(usage)
+//    exit(EXIT_FAILURE)
+//}
 
 let cmdArgs = CommandLine.arguments
 let dispatchGroup = DispatchGroup()
@@ -144,12 +144,14 @@ func resolve(args: [String]) {
     dispatchGroup.enter()
     let path = args[1]
     
-    if let url = URL(string: path) {
+    if let url = URL(string: path), let scheme = url.scheme, scheme == "https" || scheme == "http" {
         let task = URLSession.shared.dataTask(with: url) { data, response, error in
             if let data = data {
+                var index = 0;
                 let tokenizer = Tokenizer(tagRules: [EXTTagRule()])
                 tokenizer.process(data: data, details: .complete) {
-                    print($0)
+                    print(index,"-",$0)
+                    index += 1
                 }
             }
             if let error = error {
@@ -159,11 +161,32 @@ func resolve(args: [String]) {
         }
         task.resume()
     }
+    else if let url = URL(string: "file://"+path) {
+        do {
+            let data = try Data(contentsOf: url)
+            var index = 0;
+            let tokenizer = Tokenizer(tagRules: [EXTTagRule()])
+            tokenizer.process(data: data, details: .complete) {
+                print(index,"-",$0)
+                index += 1
+            }
+            dispatchGroup.leave()
+        }
+        catch {
+            print("ERROR",error)
+            dispatchGroup.leave()
+        }
+    }
+    else {
+        print("ERROR no valid url")
+        dispatchGroup.leave()
+    }
 }
 
 resolve(args: cmdArgs)
 
 dispatchGroup.notify(queue: DispatchQueue.main) {
+    print("EXIT")
     exit(EXIT_SUCCESS)
 }
 dispatchMain()

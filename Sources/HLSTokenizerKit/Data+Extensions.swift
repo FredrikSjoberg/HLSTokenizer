@@ -19,7 +19,7 @@ public struct MasterPlaylist {
 }
 
 public struct MediaPlaylist {
-    
+    public let tokens: [TokenClassification]
 }
 
 
